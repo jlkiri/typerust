@@ -25,6 +25,9 @@
       height: "100%",
       "max-height": "100vh",
     },
+    ".cm-content": {
+      "font-family": "Source Code Pro, monospace",
+    },
     ".cm-scroller": { overflow: "auto" },
   });
 
@@ -113,7 +116,6 @@
   .editor-wrapper {
     position: relative;
     flex: 1;
-    font-family: "Source Code Pro", monospace;
   }
 
   .editor {
@@ -129,6 +131,6 @@
   }
 
   :global(.cm-editor) {
-    font-size: 1.1rem;
+    font-size: 1rem;
   }
 </style>
