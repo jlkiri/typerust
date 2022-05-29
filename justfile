@@ -50,5 +50,8 @@ stop:
 deploy-dev:
     fly deploy --config fly.dev.toml
 
+deploy-prod:
+    fly deploy --config fly.production.toml
+
 load-test:
     oha -c 100 -n 400 --disable-keepalive --method POST -d 'fn main() { println!("Hello, world!"); }' http://localhost:8080/api/run

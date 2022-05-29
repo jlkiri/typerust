@@ -9,6 +9,8 @@ processes = []
 [env]
 RUST_LOG = "info"
 IP_ADDR = "0.0.0.0:8080"
+OTLP_EXPORT_URL = "https://api.honeycomb.io:443"
+LOCAL_LOG_ONLY = "false"
 
 [experimental]
 allowed_public_ports = []
