@@ -113,6 +113,7 @@
   .editor-wrapper {
     position: relative;
     flex: 1;
+    font-family: "Source Code Pro", monospace;
   }
 
   .editor {
