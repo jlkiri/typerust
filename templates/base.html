@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <title>About</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/global.css">
+
+  <style>
+    html {
+      height: 100%;
+      min-height: 100%;
+    }
+
+    body {
+      font-family: "Source Serif Pro", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+      font-size: 18px;
+      background-color: #090909;
+      color: white;
+    }
+
+    a {
+      color: salmon;
+    }
+
+    main {
+      max-width: 768px;
+      margin: 0 auto;
+      padding-top: 2.8rem;
+    }
+
+    h2 {
+      padding: 1.2rem 0;
+    }
+
+    h3 {
+      padding: 1rem 0;
+    }
+
+    ul,
+    ol {
+      list-style: unset;
+      padding: 0.4rem;
+    }
+
+    main>p:not(:last-of-type) {
+      margin-bottom: 0.8em;
+    }
+
+  </style>
+</head>
+
+<body>
+  <main>
+    {{ html | safe }}
+  </main>
+</body>
+
+</html>

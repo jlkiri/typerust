@@ -1,0 +1,44 @@
+name: Deploy to fly.io
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+jobs:
+  deploy:
+      name: deploy
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v2
+        - uses: actions/setup-node@v3
+
+        - uses: actions/cache@v3
+          with:
+            path: /tmp/.buildx-cache
+            key: ${{ runner.os }}-buildx-${{ github.sha }}
+            restore-keys: |
+              ${{ runner.os }}-buildx-
+
+        - uses: extractions/setup-just@v1
+        - run: just build-frontend-ci
+
+        - name: Set up Docker Buildx
+          id: buildx
+          uses: docker/setup-buildx-action@v2
+
+        - name: Build image
+          uses: docker/build-push-action@v3
+          with:
+            context: .
+            push: false
+            tags: typerust
+            load: true
+            cache-from: type=local,src=/tmp/.buildx-cache,scope=${{ github.workflow }}
+            cache-to: type=local,mode=max,dest=/tmp/.buildx-cache,scope=${{ github.workflow }}
+
+        - uses: superfly/flyctl-actions/setup-flyctl@master
+        - run: flyctl deploy --config fly.dev.toml --image typerust
