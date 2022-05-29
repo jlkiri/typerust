@@ -1,4 +1,4 @@
-## Rust playground
+## TypeRust Rust playground
 Welcome to **TypeRust**! This is a simple Rust playground where you can build or run your Rust code and share it with others.
 
 There are a few things to keep in mind before using it:
@@ -18,7 +18,7 @@ There are a few things to keep in mind before using it:
 TypeRust playground is powered by [`Svelte`](https://svelte.dev/) and [CodeMirror](https://codemirror.net/6/) editor on frontend and [`axum`](https://github.com/tokio-rs/axum) (and its ecosystem) on backend. [`wasmtime`](https://github.com/bytecodealliance/wasmtime) is used to create ephemeral WASM virtual machines to run user code. The whole thing is deployed to [Fly.io](https://fly.io/).
 
 ### Source code
-You can find source code on Github: [https://github.com/jlkiri/rustplayground](https://github.com/jlkiri/rustplayground).
+You can find source code on Github: [https://github.com/jlkiri/typerust](https://github.com/jlkiri/typerust).
 
 ## About the author
 This playground was created by [Kirill Vasiltsov](https://www.kirillvasiltsov.com/).
