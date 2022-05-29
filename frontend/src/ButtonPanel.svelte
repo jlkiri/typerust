@@ -64,10 +64,21 @@
     >Run <span>▶️</span></ActionButton
   >
   <ActionButton on:click={share}>Share 🪄</ActionButton>
+  <a href="/about">About TypeRust</a>
 </div>
 
 <style>
+  .panel a {
+    display: block;
+    margin-left: auto;
+    color: salmon;
+    align-self: top;
+  }
+
   .panel {
     margin-bottom: 1em;
+    display: flex;
+    width: 100%;
+    gap: 0.5em;
   }
 </style>
