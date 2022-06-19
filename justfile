@@ -8,7 +8,7 @@ OTLP_EXPORT_URL := env_var_or_default("OTLP_EXPORT_URL", "")
 HONEYCOMB_API_TOKEN := env_var_or_default("HONEYCOMB_API_TOKEN", "")
 
 build-formatter:
-    cd formatter && wasm-pack build --release --target web
+    docker buildx build --file formatter/Dockerfile formatter --output formatter/pkg
 
 frontend-install-deps:
     cd frontend && npm ci
