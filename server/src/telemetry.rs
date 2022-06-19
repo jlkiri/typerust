@@ -19,6 +19,7 @@ pub fn create_stdout_subscriber() -> impl Subscriber {
 
     let tracer = stdout::new_pipeline()
         .with_trace_config(trace_config)
+        .with_pretty_print(true)
         .install_simple();
     let telemetry = tracing_opentelemetry::layer().with_tracer(tracer);
 

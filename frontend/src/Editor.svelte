@@ -8,9 +8,10 @@
   import type { Extension } from "@codemirror/state";
   import lz from "lz-string";
   import ActionButton from "./ActionButton.svelte";
+  import * as fmt from "formatter";
 
   let parent = null;
-  let editor = null;
+  let editor: EditorView = null;
 
   let isDarkTheme = true;
 
@@ -83,6 +84,17 @@
     });
   }
 
+  function format() {
+    const prettyCode = fmt.pretty($code);
+    editor.dispatch({
+      changes: {
+        from: 0,
+        to: editor.state.doc.length,
+        insert: prettyCode,
+      },
+    });
+  }
+
   function mountEditor(...additionalExtensions: Array<Extension>) {
     editor = new EditorView({
       state: EditorState.create({
@@ -91,6 +103,12 @@
       parent: parent,
     });
   }
+
+  async function initializeFormatter() {
+    await fmt.default();
+  }
+
+  onMount(initializeFormatter);
 
   onMount(() => {
     mountEditor(codeUpdateListener, fixedHeightEditor, oneDark);
@@ -109,6 +127,7 @@
     <ActionButton dark={isDarkTheme} on:click={toggleEditorTheme}
       >{isDarkTheme ? "Light" : "Dark"}</ActionButton
     >
+    <ActionButton on:click={format}>Format 📝</ActionButton>
   </div>
 </div>
 

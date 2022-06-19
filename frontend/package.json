@@ -26,6 +26,7 @@
     "@types/lz-string": "^1.3.34",
     "@zerodevx/svelte-toast": "^0.7.2",
     "lz-string": "^1.4.4",
-    "svelte-loading-spinners": "^0.1.7"
+    "svelte-loading-spinners": "^0.1.7",
+    "formatter": "file:../formatter/pkg"
   }
 }
