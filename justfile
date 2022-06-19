@@ -7,17 +7,20 @@ LOCAL_LOG_ONLY := env_var_or_default("LOCAL_LOG_ONLY", "true")
 OTLP_EXPORT_URL := env_var_or_default("OTLP_EXPORT_URL", "")
 HONEYCOMB_API_TOKEN := env_var_or_default("HONEYCOMB_API_TOKEN", "")
 
+build-formatter:
+    cd formatter && wasm-pack build --release --target web
+
 frontend-install-deps:
     cd frontend && npm ci
 
-build-frontend:
+build-frontend: build-formatter
     rm -rf server/public/*
     mkdir -p server/public
     cd frontend && npm run build
     cp -r frontend/dist/* server/public
     cp -r md/* server/public
 
-build-frontend-ci: frontend-install-deps build-frontend
+build-frontend-ci: frontend-install-deps build-formatter build-frontend
 
 build: build-frontend
     cargo build --manifest-path server/Cargo.toml
