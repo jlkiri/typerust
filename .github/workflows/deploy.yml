@@ -23,13 +23,13 @@ jobs:
             restore-keys: |
               ${{ runner.os }}-buildx-
 
-        - uses: extractions/setup-just@v1
-        - run: just build-frontend-ci
-
         - name: Set up Docker Buildx
           id: buildx
           uses: docker/setup-buildx-action@v2
 
+        - uses: extractions/setup-just@v1
+        - run: just build-frontend-ci
+        
         - name: Build image
           uses: docker/build-push-action@v3
           with:
