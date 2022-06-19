@@ -20,7 +20,7 @@ build-frontend: build-formatter
     cp -r frontend/dist/* server/public
     cp -r md/* server/public
 
-build-frontend-ci: frontend-install-deps build-formatter build-frontend
+build-frontend-ci: build-formatter frontend-install-deps build-frontend
 
 build: build-frontend
     cargo build --manifest-path server/Cargo.toml
