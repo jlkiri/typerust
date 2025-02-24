@@ -111,9 +111,9 @@ fn run_wasm_timeout(engine: Engine) -> tokio::task::JoinHandle<()> {
 use std::fs::File;
 
 #[cfg(target_os = "linux")]
-fn create_stdout_file() -> std::io::Result<impl AsRawFd> {
-    use memfile::MemFile;
-    MemFile::create_default("playground")
+fn create_stdout_file() -> std::io::Result<File> {
+    use tempfile::tempfile;
+    tempfile()
 }
 
 #[cfg(target_os = "macos")]

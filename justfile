@@ -38,13 +38,13 @@ build-image: build-frontend
     docker buildx build --tag typerust .
 
 run: stop
-    docker run --rm \
+    docker run \
         --env RUST_LOG={{RUST_LOG}} \
         --env IP_ADDR={{IP_ADDR}} \
         --env LOCAL_LOG_ONLY={{LOCAL_LOG_ONLY}} \
         --env OTLP_EXPORT_URL={{OTLP_EXPORT_URL}} \
         --env HONEYCOMB_API_TOKEN={{HONEYCOMB_API_TOKEN}} \
-        --detach --name playground \
+       --name playground \
         --publish 8080:8080 typerust
 
 stop:

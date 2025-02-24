@@ -13,11 +13,11 @@ COPY server .
 RUN cargo install --path .
 
 
-FROM rust:1.61-slim-bullseye
+FROM rust:slim
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates
-RUN rustup target add wasm32-wasi
+RUN rustup target add wasm32-wasip1
 
 COPY --from=builder /usr/local/cargo/bin/typerust .
 COPY templates templates
