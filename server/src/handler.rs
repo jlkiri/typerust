@@ -89,7 +89,7 @@ impl Compiler {
             .arg("--out-dir")
             .arg(&self.output_dir)
             .arg("--target")
-            .arg("wasm32-wasi")
+            .arg("wasm32-wasip1")
             .arg(&self.input_file);
         let output = cmd.output().await;
 

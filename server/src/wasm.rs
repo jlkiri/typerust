@@ -1,7 +1,5 @@
 use std::io::Read;
 use std::io::Seek;
-use std::os::unix::prelude::AsRawFd;
-use std::os::unix::prelude::FromRawFd;
 use std::path::Path;
 
 use crate::error::SandboxError;
@@ -12,14 +10,14 @@ use tracing::Instrument;
 use wasmtime::Config;
 use wasmtime::Trap;
 use wasmtime::{Engine, Linker, Module, ResourceLimiter, Store, StoreLimits, StoreLimitsBuilder};
-use wasmtime_wasi::WasiCtx;
+use wasmtime_wasi::preview1::WasiP1Ctx;
 
 const WASM_MINIMUM_MEMORY_SIZE: u64 = bytesize::KIB * 64 * 17;
 const WASM_INSTANCE_MEMORY_LIMIT: u64 = WASM_MINIMUM_MEMORY_SIZE + bytesize::MB * 100;
 const TICKS_BEFORE_TIMEOUT: u64 = 5;
 
 struct WasmStoreData {
-    wasi: wasmtime_wasi::WasiCtx,
+    wasi: WasiP1Ctx,
     memory_limiter: MemoryLimiter,
 }
 
@@ -42,43 +40,58 @@ impl MemoryLimiter {
 }
 
 impl ResourceLimiter for MemoryLimiter {
-    fn memory_growing(&mut self, _current: usize, desired: usize, _maximum: Option<usize>) -> bool {
+    fn memory_growing(
+        &mut self,
+        _current: usize,
+        desired: usize,
+        _maximum: Option<usize>,
+    ) -> anyhow::Result<bool> {
         let is_rejected = self.limiter.memory_growing(_current, desired, _maximum);
-        if is_rejected {
-            self.memory_limit_exceeded = true;
+        if let Ok(is_rejected) = is_rejected {
+            if is_rejected {
+                self.memory_limit_exceeded = true;
+            }
         }
         is_rejected
     }
 
-    fn table_growing(&mut self, current: u32, desired: u32, maximum: Option<u32>) -> bool {
+    fn table_growing(
+        &mut self,
+        current: usize,
+        desired: usize,
+        maximum: Option<usize>,
+    ) -> anyhow::Result<bool> {
         self.limiter.table_growing(current, desired, maximum)
     }
 
-    fn table_grow_failed(&mut self, _error: &anyhow::Error) {}
+    fn table_grow_failed(&mut self, _error: anyhow::Error) -> anyhow::Result<()> {
+        Err(anyhow::format_err!("table_grow_failed"))
+    }
 
-    fn memory_grow_failed(&mut self, _error: &anyhow::Error) {
+    fn memory_grow_failed(&mut self, _error: anyhow::Error) -> anyhow::Result<()> {
         self.memory_limit_exceeded = true;
+        Err(anyhow::format_err!("memory_grow_failed"))
     }
 }
 
-fn is_deadline_error(err: Option<Trap>) -> bool {
-    err.map_or(false, |e| e.to_string().starts_with("epoch deadline"))
+fn is_deadline_error(err: &Trap) -> bool {
+    err.to_string().starts_with("epoch deadline")
 }
 
 fn run_wasm_instance(
     module: &Module,
     engine: &Engine,
     mut store: &mut Store<WasmStoreData>,
-) -> anyhow::Result<Option<Trap>> {
-    use wasmtime_wasi::add_to_linker;
+) -> anyhow::Result<Option<anyhow::Error>> {
+    use wasmtime_wasi::preview1;
 
-    let mut linker: Linker<WasmStoreData> = Linker::new(engine);
-    add_to_linker(&mut linker, |state| &mut state.wasi)?;
+    let mut linker: Linker<WasmStoreData> = Linker::new(&engine);
+    preview1::add_to_linker_sync(&mut linker, |t| &mut t.wasi)?;
+    let pre = linker.instantiate_pre(&module)?;
+    let instance = pre.instantiate(&mut store)?;
 
-    linker.module(&mut store, "", module)?;
-    let err = linker
-        .get_default(&mut store, "")?
-        .typed::<(), (), _>(&mut store)?
+    let err = instance
+        .get_typed_func::<(), ()>(&mut store, "_start")?
         .call(&mut store, ())
         .err();
 
@@ -95,6 +108,8 @@ fn run_wasm_timeout(engine: Engine) -> tokio::task::JoinHandle<()> {
     })
 }
 
+use std::fs::File;
+
 #[cfg(target_os = "linux")]
 fn create_stdout_file() -> std::io::Result<impl AsRawFd> {
     use memfile::MemFile;
@@ -102,23 +117,17 @@ fn create_stdout_file() -> std::io::Result<impl AsRawFd> {
 }
 
 #[cfg(target_os = "macos")]
-fn create_stdout_file() -> std::io::Result<impl AsRawFd> {
+fn create_stdout_file() -> std::io::Result<File> {
     use tempfile::tempfile;
     tempfile()
 }
 
 fn execute_wasm_instance(module: Module, engine: Engine) -> anyhow::Result<String> {
-    use cap_std::fs::File as CapStdFile;
-    use wasmtime_wasi::{sync::file::File, WasiCtxBuilder};
+    use wasmtime_wasi::WasiCtxBuilder;
 
-    let memfile = create_stdout_file()?;
-    let memfile_fd = memfile.as_raw_fd();
-
-    let mut cap_std_file = unsafe { CapStdFile::from_raw_fd(memfile_fd) };
-    let cap_std_file_clone = cap_std_file.try_clone()?;
-    let stdout_file = File::from_cap_std(cap_std_file_clone);
-
-    let wasi = WasiCtxBuilder::new().stdout(Box::new(stdout_file)).build();
+    let mut memfile = create_stdout_file()?;
+    let stdout_file = wasmtime_wasi::OutputFile::new(memfile.try_clone()?);
+    let wasi = WasiCtxBuilder::new().stdout(stdout_file).build_p1();
 
     let mut store = create_wasm_store(&engine, wasi);
     store.set_epoch_deadline(TICKS_BEFORE_TIMEOUT);
@@ -126,27 +135,31 @@ fn execute_wasm_instance(module: Module, engine: Engine) -> anyhow::Result<Strin
     let timeout = run_wasm_timeout(engine.clone());
     let err = run_wasm_instance(&module, &engine, &mut store)?;
 
-    if is_deadline_error(err.clone()) {
-        tracing::info!("SandboxError::Timeout");
-        bail!(SandboxError::Timeout)
-    }
+    if let Some(err) = err {
+        if is_deadline_error(&err.downcast::<Trap>()?) {
+            tracing::info!("SandboxError::Timeout");
+            bail!(SandboxError::Timeout)
+        }
 
-    if err.is_some() && store.data().memory_limiter.memory_limit_exceeded() {
-        timeout.abort();
-        tracing::info!("SandboxError::OOM");
-        bail!(SandboxError::OOM)
+        if store.data().memory_limiter.memory_limit_exceeded() {
+            timeout.abort();
+            tracing::info!("SandboxError::OOM");
+            bail!(SandboxError::OOM)
+        }
     }
 
     timeout.abort();
-    cap_std_file.rewind()?;
+    if let Err(e) = memfile.rewind() {
+        bail!("failed to rewind: {e}")
+    }
 
     let mut output = String::new();
-    cap_std_file.read_to_string(&mut output)?;
+    memfile.read_to_string(&mut output)?;
 
     Ok(output)
 }
 
-fn create_wasm_store(engine: &Engine, wasi: WasiCtx) -> Store<WasmStoreData> {
+fn create_wasm_store(engine: &Engine, wasi: WasiP1Ctx) -> Store<WasmStoreData> {
     let store_limits = StoreLimitsBuilder::new()
         .memory_size(WASM_INSTANCE_MEMORY_LIMIT as usize)
         .build();

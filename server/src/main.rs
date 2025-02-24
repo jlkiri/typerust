@@ -120,8 +120,8 @@ async fn run(code: String, Extension(state): Extension<Arc<State>>) -> impl Into
         Err(_) => {
             tracing::error!("memory limit or unallowed filesystem/network access");
             let response = HandlerResponse::Error(
-                "RUNTIME ERROR: This could happen for the following reasons: 
-a) you tried to access filesystem and/or network which is not allowed in this playground or 
+                "RUNTIME ERROR: This could happen for the following reasons:
+a) you tried to access filesystem and/or network which is not allowed in this playground or
 b) your code exceeded memory limit and was interrupted."
                     .into(),
             );

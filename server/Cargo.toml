@@ -11,7 +11,7 @@ axum = "0.5.4"
 axum-extra = { version = "0.3.3", features = ["spa"] }
 bytes = "1.1.0"
 bytesize = "1.1.0"
-cap-std = "0.24.3"
+cap-std = "3.4.2"
 dotenv = "0.15.0"
 envy = "0.4.2"
 http-body = "0.4.5"
@@ -28,13 +28,19 @@ tera = { version = "1.15.0", default-features = false }
 thiserror = "1.0"
 tokio = { version = "1.18.1", features = ["full"] }
 tonic = { version = "0.6.2", features = ["tls-roots"] }
-tower-http = { version = "0.3.3", features = ["cors", "fs", "set-header", "trace"] }
+tower-http = { version = "0.3.3", features = [
+    "cors",
+    "fs",
+    "set-header",
+    "trace",
+] }
 tracing = { version = "0.1.34", features = ["attributes"] }
 tracing-opentelemetry = "0.17.2"
 tracing-subscriber = { version = "0.3.11", features = ["env-filter", "fmt"] }
 url = "2.2.2"
-wasmtime = { version = "0.36.0", features = ["async"] }
-wasmtime-wasi = "0.36.0"
+wasi-common = "30.0.1"
+wasmtime = { version = "30.0.1", features = ["async"] }
+wasmtime-wasi = "30.0.1"
 
 [target.'cfg(target_os = "linux")'.dependencies]
 memfile = "0.2.1"

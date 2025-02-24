@@ -1,11 +1,11 @@
 set dotenv-load := true
 set shell := ["bash", "-uc"]
 
-RUST_LOG := env_var_or_default("RUST_LOG", "debug")
-IP_ADDR := env_var_or_default("IP_ADDR", "0.0.0.0:8080")
-LOCAL_LOG_ONLY := env_var_or_default("LOCAL_LOG_ONLY", "true")
-OTLP_EXPORT_URL := env_var_or_default("OTLP_EXPORT_URL", "")
-HONEYCOMB_API_TOKEN := env_var_or_default("HONEYCOMB_API_TOKEN", "")
+RUST_LOG := env("RUST_LOG", "debug")
+IP_ADDR := env("IP_ADDR", "0.0.0.0:8080")
+LOCAL_LOG_ONLY := env("LOCAL_LOG_ONLY", "true")
+OTLP_EXPORT_URL := env("OTLP_EXPORT_URL", "")
+HONEYCOMB_API_TOKEN := env("HONEYCOMB_API_TOKEN", "")
 
 build-formatter:
     docker buildx build --file formatter/Dockerfile formatter --output formatter/pkg
@@ -32,7 +32,7 @@ test:
     cargo test --manifest-path server/Cargo.toml
 
 run-local: build
-    RUST_LOG={{RUST_LOG}},typerust=debug cargo run --manifest-path server/Cargo.toml
+    IP_ADDR={{IP_ADDR}} LOCAL_LOG_ONLY={{LOCAL_LOG_ONLY}} OTLP_EXPORT_URL={{OTLP_EXPORT_URL}} HONEYCOMB_API_TOKEN={{HONEYCOMB_API_TOKEN}} RUST_LOG={{RUST_LOG}},typerust=debug cargo run --manifest-path server/Cargo.toml
 
 build-image: build-frontend
     docker buildx build --tag typerust .
